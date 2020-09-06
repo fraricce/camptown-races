@@ -2,11 +2,13 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	// tl "github.com/JoelOtter/termloop"
-	"github.com/dustinkirkland/golang-petname"
+	"log"
 	"math/rand"
 	"time"
+
+	petname "github.com/dustinkirkland/golang-petname"
+	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
 var (
@@ -19,17 +21,23 @@ func init() {
 }
 
 func main() {
+	if err := ui.Init(); err != nil {
+		log.Fatalf("failed to initialize termui: %v", err)
+	}
+	defer ui.Close()
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
-	fmt.Println(petname.Generate(*words, *separator))
+	name := petname.Generate(*words, *separator)
+	p := widgets.NewParagraph()
+	p.Text = name
+	p.TextStyle.Fg = ui.ColorBlue
+	p.SetRect(0, 0, 20, 5)
 
-	// game := tl.NewGame()
-	// level := tl.NewBaseLevel(tl.Cell{
-	// 	Bg: tl.ColorGreen,
-	// 	Fg: tl.ColorBlack,
-	// 	Ch: 'v',
-	// })
-	// level.AddEntity(tl.NewRectangle(0, 0, 10, 40, tl.ColorBlue))
-	// game.Screen().SetLevel(level)
-	// game.Start()
+	ui.Render(p)
+
+	for e := range ui.PollEvents() {
+		if e.Type == ui.KeyboardEvent {
+			break
+		}
+	}
 }
