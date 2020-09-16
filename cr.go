@@ -20,6 +20,7 @@ type horse struct {
 
 var horses []horse
 var horseNames string
+var total int
 
 func main() {
 
@@ -29,6 +30,7 @@ func main() {
 	}
 	defer g.Close()
 
+	total = 0
 	words := flag.Int("words", 1, "The number of words in the pet name")
 	separator := flag.String("separator", " ", "The separator between words in the pet name")
 	flag.Parse()
@@ -70,7 +72,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "1. Start the race")
+		fmt.Fprintln(v, "1. Start the raceeeesss")
 		v.Title = "Commands"
 	}
 
@@ -83,23 +85,18 @@ func quit(g *gocui.Gui, v *gocui.View) error {
 
 func startRace(g *gocui.Gui, v *gocui.View) error {
 
-	g.Update(func(g *gocui.Gui) error {
-		v, err := g.View("hello")
-		if err != nil {
-			return err
-		}
-		v.Clear()
-		for i := 0; i < 10; i++ {
-
-			//v.Clear()
-			fmt.Fprint(v, "d\n")
-
-			//v.Write([]byte(str))
-			//fmt.Print(str)
-
-		}
-		return nil
-	})
-
+	for i := 0; i < 10; i++ {
+		g.Update(func(g *gocui.Gui) error {
+			v, err := g.View("hello")
+			if err != nil {
+				return err
+			}
+			fmt.Fprint(v, total)
+			fmt.Println(total)
+			total++
+			time.Sleep(time.Duration(1) * time.Second)
+			return nil
+		})
+	}
 	return nil
 }
