@@ -18,11 +18,10 @@ type horse struct {
 	strenght int
 }
 
-var horses []horse
-
 var (
-	done = make(chan struct{})
-	ctr  = 0
+	done   = make(chan struct{})
+	ctr    = 0
+	horses []horse
 )
 
 func main() {
@@ -36,11 +35,10 @@ func main() {
 	separator := flag.String("separator", " ", "The separator between words in the pet name")
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 5; i++ {
 
+	for i := 0; i < 5; i++ {
 		temp := petname.Generate(*words, *separator)
 		horses = append(horses, horse{name: cam.ToCamel(temp), age: 2, strenght: 8})
-
 	}
 
 	g.SetManagerFunc(layout)
@@ -54,19 +52,38 @@ func main() {
 	}
 }
 
+func renderHorses(v *gocui.View) error {
+	for i := 0; i < 5; i++ {
+		h := PadRight(horses[i].name, " ", 12)
+		fmt.Fprintln(v, PadRight(h, ".", 50))
+
+	}
+	fmt.Fprintln(v, ctr)
+	return nil
+}
+
+func PadRight(str, pad string, lenght int) string {
+	for {
+		str += pad
+		if len(str) > lenght {
+			return str[0:lenght]
+		}
+	}
+}
+
 func layout(g *gocui.Gui) error {
-	if v, err := g.SetView("hello", 0, 0, 30, 10); err != nil {
+	if v, err := g.SetView("hello", 0, 0, 55, 10); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "0")
+		renderHorses(v)
 	}
 
-	if v, err := g.SetView("hello2", 31, 0, 55, 10); err != nil {
+	if v, err := g.SetView("hello2", 56, 0, 70, 10); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "1. Start the race")
+		fmt.Fprintln(v, "s. Start the race")
 		v.Title = "Commands"
 	}
 
@@ -100,7 +117,6 @@ func counter(g *gocui.Gui) {
 		case <-done:
 			return
 		case <-time.After(500 * time.Millisecond):
-			n := ctr
 			ctr++
 
 			g.Update(func(g *gocui.Gui) error {
@@ -109,7 +125,7 @@ func counter(g *gocui.Gui) {
 					return err
 				}
 				v.Clear()
-				fmt.Fprintln(v, n)
+				renderHorses(v)
 				return nil
 			})
 
