@@ -72,7 +72,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "1. Start the raceeeesss")
+		fmt.Fprintln(v, "1. Start the race")
 		v.Title = "Commands"
 	}
 
@@ -91,10 +91,9 @@ func startRace(g *gocui.Gui, v *gocui.View) error {
 			if err != nil {
 				return err
 			}
-			fmt.Fprint(v, total)
-			fmt.Println(total)
+			fmt.Println(v, total)
 			total++
-			time.Sleep(time.Duration(1) * time.Second)
+
 			return nil
 		})
 	}
