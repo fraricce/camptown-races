@@ -1,12 +1,24 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
+	petname "github.com/dustinkirkland/golang-petname"
+	cam "github.com/iancoleman/strcase"
 	"github.com/jroimartin/gocui"
 )
+
+type horse struct {
+	name     string
+	age      int
+	strenght int
+}
+
+var horses []horse
 
 var (
 	done = make(chan struct{})
@@ -20,6 +32,17 @@ func main() {
 	}
 	defer g.Close()
 
+	words := flag.Int("words", 1, "The number of words in the pet name")
+	separator := flag.String("separator", " ", "The separator between words in the pet name")
+	flag.Parse()
+	rand.Seed(time.Now().UnixNano())
+	for i := 0; i < 5; i++ {
+
+		temp := petname.Generate(*words, *separator)
+		horses = append(horses, horse{name: cam.ToCamel(temp), age: 2, strenght: 8})
+
+	}
+
 	g.SetManagerFunc(layout)
 
 	if err := keybindings(g); err != nil {
@@ -32,12 +55,21 @@ func main() {
 }
 
 func layout(g *gocui.Gui) error {
-	if v, err := g.SetView("ctr", 2, 2, 12, 4); err != nil {
+	if v, err := g.SetView("hello", 0, 0, 30, 10); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		fmt.Fprintln(v, "0")
 	}
+
+	if v, err := g.SetView("hello2", 31, 0, 55, 10); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		fmt.Fprintln(v, "1. Start the race")
+		v.Title = "Commands"
+	}
+
 	return nil
 }
 
@@ -72,7 +104,7 @@ func counter(g *gocui.Gui) {
 			ctr++
 
 			g.Update(func(g *gocui.Gui) error {
-				v, err := g.View("ctr")
+				v, err := g.View("hello")
 				if err != nil {
 					return err
 				}
