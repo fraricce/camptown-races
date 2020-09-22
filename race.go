@@ -41,7 +41,8 @@ func main() {
 
 	for i := 0; i < 5; i++ {
 		temp := petname.Generate(*words, *separator)
-		horses = append(horses, horse{name: cam.ToCamel(temp), age: 2, strenght: 8, pos: 1, fallen: false})
+		force := rand.Intn(9) + 1
+		horses = append(horses, horse{name: cam.ToCamel(temp), age: 2, strenght: force, pos: 1, fallen: false})
 	}
 
 	g.SetManagerFunc(layout)
@@ -58,8 +59,10 @@ func main() {
 func renderHorses(v *gocui.View) error {
 
 	for i := 1; i <= 5; i++ {
-
-		stride := rand.Intn(2) + 1
+		stride := rand.Intn(3-1) + 1
+		if stride < 0 {
+			stride = 0
+		}
 		h := strconv.Itoa(i) + ". " + PadRight(horses[i-1].name, " ", 9)
 
 		len := ""
@@ -69,12 +72,13 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		if horses[i-1].pos > 1 {
-			for j := 0; j < stride; j++ {
+			for s := 0; s < stride; s++ {
 				len += "."
 			}
 		}
 
 		horses[i-1].pos++
+		horses[i-1].pos += stride
 
 		if !(horses[i-1].fallen) {
 			h += len
@@ -96,10 +100,19 @@ func PadRight(str, pad string, lenght int) string {
 }
 
 func layout(g *gocui.Gui) error {
+
 	if v, err := g.SetView("raceField", 0, 0, 79, 10); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+		v.Title = "Camptown Races"
+		s := make([]string, 3)
+		dice := rand.Intn(3)
+		s[0] = " Stratford Racecourse"
+		s[1] = " Wolverhampton Racecourse"
+		s[2] = " Cheltenham Racecourse"
+
+		fmt.Fprintln(v, "Welcome to"+s[dice]+"!")
 		renderHorses(v)
 	}
 
@@ -161,7 +174,7 @@ func counter(g *gocui.Gui) {
 				return nil
 			})
 
-			if ctr == 20 {
+			if ctr == 15 {
 				ctr = 0
 				<-done
 			}
