@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strconv"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -16,6 +17,8 @@ type horse struct {
 	name     string
 	age      int
 	strenght int
+	pos      int
+	fallen   bool
 }
 
 var (
@@ -38,7 +41,7 @@ func main() {
 
 	for i := 0; i < 5; i++ {
 		temp := petname.Generate(*words, *separator)
-		horses = append(horses, horse{name: cam.ToCamel(temp), age: 2, strenght: 8})
+		horses = append(horses, horse{name: cam.ToCamel(temp), age: 2, strenght: 8, pos: 1, fallen: false})
 	}
 
 	g.SetManagerFunc(layout)
@@ -53,10 +56,31 @@ func main() {
 }
 
 func renderHorses(v *gocui.View) error {
-	for i := 0; i < 5; i++ {
-		h := PadRight(horses[i].name, " ", 12)
-		fmt.Fprintln(v, PadRight(h, ".", 50))
 
+	for i := 1; i <= 5; i++ {
+
+		stride := rand.Intn(2) + 1
+		h := strconv.Itoa(i) + ". " + PadRight(horses[i-1].name, " ", 9)
+
+		len := ""
+
+		for j := 0; j < horses[i-1].pos; j++ {
+			len += "."
+		}
+
+		if horses[i-1].pos > 1 {
+			for j := 0; j < stride; j++ {
+				len += "."
+			}
+		}
+
+		horses[i-1].pos++
+
+		if !(horses[i-1].fallen) {
+			h += len
+		}
+
+		fmt.Fprintln(v, h)
 	}
 	fmt.Fprintln(v, ctr)
 	return nil
@@ -72,19 +96,27 @@ func PadRight(str, pad string, lenght int) string {
 }
 
 func layout(g *gocui.Gui) error {
-	if v, err := g.SetView("hello", 0, 0, 55, 10); err != nil {
+	if v, err := g.SetView("raceField", 0, 0, 79, 10); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		renderHorses(v)
 	}
 
-	if v, err := g.SetView("hello2", 56, 0, 70, 10); err != nil {
+	if v, err := g.SetView("command", 0, 11, 22, 20); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		fmt.Fprintln(v, "s. Start the race")
 		v.Title = "Commands"
+	}
+
+	if v, err := g.SetView("quotations", 23, 11, 79, 20); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		fmt.Fprintln(v, "s. Start the race")
+		v.Title = "Quotations"
 	}
 
 	return nil
@@ -120,7 +152,7 @@ func counter(g *gocui.Gui) {
 			ctr++
 
 			g.Update(func(g *gocui.Gui) error {
-				v, err := g.View("hello")
+				v, err := g.View("raceField")
 				if err != nil {
 					return err
 				}
@@ -129,7 +161,7 @@ func counter(g *gocui.Gui) {
 				return nil
 			})
 
-			if ctr == 10 {
+			if ctr == 20 {
 				ctr = 0
 				<-done
 			}
