@@ -27,6 +27,7 @@ type placeInfo struct {
 	city       string
 	county     string
 	country    string
+	weather    int // 0 sunny, 1 rain
 }
 
 type raceInfo struct {
@@ -73,7 +74,19 @@ func generateRace() raceInfo {
 }
 
 func generatePlace() placeInfo {
-	place := placeInfo{city: "Salisbury", raceCourse: "Salisbury Racecourse", county: "Wiltshire", country: "England"}
+	weather := 1
+	weatherFactor := rand.Intn(10)
+	if weatherFactor >= 5 {
+		weather = 0
+	} else {
+		if weatherFactor >= 3 {
+			weather = 1
+		} else {
+			weather = 2
+		}
+	}
+
+	place := placeInfo{city: "Salisbury", raceCourse: "Salisbury Racecourse", county: "Wiltshire", country: "England", weather: weather}
 	return place
 }
 
@@ -93,15 +106,45 @@ func generateHorses() []horse {
 	return horses
 }
 
-// func moveHorses() {
+func moveHorses() {
+	for i := 1; i <= 5; i++ {
+		strideFactor := horses[i-1].strenght + 1
+		stride := rand.Intn(strideFactor-1) + 1
 
-// }
+		if stride >= 8 {
+			stride = 4
+		} else if stride < 8 && stride >= 6 {
+			stride = 3
+		} else if stride < 6 && stride >= 4 {
+			stride = 2
+		} else if stride < 4 && stride > 1 {
+			stride = 1
+		} else {
+			stride = 3
+		}
+
+		if !(horses[i-1].fallen) {
+			//horses[i-1].pos++
+			horses[i-1].pos += stride
+
+			fallFactor := 0
+			if place.weather == 0 {
+				fallFactor = 70
+			} else {
+				fallFactor = 30
+			}
+			fall := rand.Intn(fallFactor) + 1
+			if fall == 2 {
+				horses[i-1].fallen = true
+			}
+		}
+
+	}
+}
 
 func renderHorses(v *gocui.View) error {
 
 	for i := 1; i <= 5; i++ {
-		stride := rand.Intn(3-1) + 1
-
 		h := strconv.Itoa(i) + ". " + PadRight(horses[i-1].name, " ", 9)
 
 		len := ""
@@ -110,22 +153,15 @@ func renderHorses(v *gocui.View) error {
 			len += "."
 		}
 
-		if horses[i-1].pos > 1 {
-			for s := 0; s < stride; s++ {
-				len += "."
-			}
-		}
+		h += len
 
-		horses[i-1].pos++
-		horses[i-1].pos += stride
-
-		if !(horses[i-1].fallen) {
-			h += len
+		if horses[i-1].fallen {
+			h += "X"
 		}
 
 		fmt.Fprintln(v, h)
 	}
-	fmt.Fprintln(v, ctr)
+
 	return nil
 }
 
@@ -193,7 +229,19 @@ func openRace(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 		v.Clear()
-		fmt.Fprintln(v, race.name+" at "+place.raceCourse+"\n")
+
+		weatherInfo := ""
+		if place.weather == 0 {
+			weatherInfo = "Sunny"
+		}
+		if place.weather == 1 {
+			weatherInfo = "Light rain"
+		}
+		if place.weather == 2 {
+			weatherInfo = "Heavy rain"
+		}
+		fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+weatherInfo+"\n")
+
 		renderHorses(v)
 		return nil
 	})
@@ -217,7 +265,7 @@ func counter(g *gocui.Gui) {
 		select {
 		case <-done:
 			return
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(650 * time.Millisecond):
 			ctr++
 
 			g.Update(func(g *gocui.Gui) error {
@@ -226,7 +274,20 @@ func counter(g *gocui.Gui) {
 					return err
 				}
 				v.Clear()
-				fmt.Fprintln(v, race.name+" at "+place.raceCourse+"\n")
+
+				weatherInfo := ""
+				if place.weather == 0 {
+					weatherInfo = "Sunny"
+				}
+				if place.weather == 1 {
+					weatherInfo = "Light rain"
+				}
+				if place.weather == 2 {
+					weatherInfo = "Heavy rain"
+				}
+				fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+weatherInfo+"\n")
+
+				moveHorses()
 				renderHorses(v)
 				return nil
 			})
