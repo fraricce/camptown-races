@@ -1,0 +1,20 @@
+[
+  {
+    "raceCourse": "Cheltenham Racecourse",
+    "city": "Cheltenham",
+    "county": "Gloucestershire",
+    "country": "England"
+  },
+  {
+    "raceCourse": "Wolverhampton Racecourse",
+    "city": "Wolverhampton",
+    "county": "West Midlands",
+    "country": "England"
+  },
+  {
+    "raceCourse": "Stratford-on-Avon Racecourse",
+    "city": "Stratford-upon-Avon",
+    "county": "Warwickshire",
+    "country": "England"
+  }
+]
