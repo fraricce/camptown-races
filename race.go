@@ -38,11 +38,12 @@ type raceInfo struct {
 }
 
 var (
-	done   = make(chan struct{})
-	ctr    = 0
-	horses []horse
-	place  placeInfo
-	race   raceInfo
+	done       = make(chan struct{})
+	ctr        = 0
+	finishLine = 20
+	horses     []horse
+	place      placeInfo
+	race       raceInfo
 )
 
 func main() {
@@ -123,7 +124,7 @@ func moveHorses() {
 			stride = 3
 		}
 
-		if !(horses[i-1].fallen) {
+		if !(horses[i-1].fallen) && horses[i-1].pos <= finishLine {
 			//horses[i-1].pos++
 			horses[i-1].pos += stride
 
@@ -152,7 +153,12 @@ func renderHorses(v *gocui.View) error {
 
 		len := ""
 
-		for j := 0; j < horses[i-1].pos; j++ {
+		maxExtent := horses[i-1].pos
+		if maxExtent > finishLine {
+			maxExtent = finishLine
+		}
+
+		for j := 0; j < maxExtent; j++ {
 			len += "."
 		}
 
@@ -163,6 +169,7 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		fmt.Fprintln(v, h)
+		//log.Printf("Horse n.%d pos:%d", i, horses[i-1].pos)
 	}
 
 	return nil
@@ -260,6 +267,25 @@ func start(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func someonePassedTheFinishLine() int {
+	for i := 0; i < 5; i++ {
+		if (horses[i].pos) >= finishLine {
+			return i
+		}
+	}
+	return -1
+}
+
+func allEndedRace() bool {
+	howManyPassed := 0
+	for i := 0; i < 5; i++ {
+		if (horses[i].pos) > finishLine || horses[i].fallen {
+			howManyPassed++
+		}
+	}
+	return howManyPassed == 5
+}
+
 func quit(g *gocui.Gui, v *gocui.View) error {
 	close(done)
 	return gocui.ErrQuit
@@ -280,14 +306,13 @@ func counter(g *gocui.Gui) {
 					return err
 				}
 				v.Clear()
-
 				renderRaceTitle(v)
 				moveHorses()
 				renderHorses(v)
 				return nil
 			})
 
-			if ctr == 15 {
+			if allEndedRace() {
 				ctr = 0
 				<-done
 			}
