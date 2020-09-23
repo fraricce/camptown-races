@@ -233,23 +233,26 @@ func openRace(g *gocui.Gui, v *gocui.View) error {
 		}
 		v.Clear()
 
-		weatherInfo := ""
-		if place.weather == 0 {
-			weatherInfo = "Sunny"
-		}
-		if place.weather == 1 {
-			weatherInfo = "Light rain"
-		}
-		if place.weather == 2 {
-			weatherInfo = "Heavy rain"
-		}
-		fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+weatherInfo+"\n")
-
+		renderRaceTitle(v)
 		renderHorses(v)
 		return nil
 	})
 
 	return nil
+}
+
+func renderRaceTitle(v *gocui.View) {
+	weatherInfo := ""
+	if place.weather == 0 {
+		weatherInfo = "Sunny"
+	}
+	if place.weather == 1 {
+		weatherInfo = "Light rain"
+	}
+	if place.weather == 2 {
+		weatherInfo = "Heavy rain"
+	}
+	fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+weatherInfo+"\n")
 }
 
 func start(g *gocui.Gui, v *gocui.View) error {
@@ -278,18 +281,7 @@ func counter(g *gocui.Gui) {
 				}
 				v.Clear()
 
-				weatherInfo := ""
-				if place.weather == 0 {
-					weatherInfo = "Sunny"
-				}
-				if place.weather == 1 {
-					weatherInfo = "Light rain"
-				}
-				if place.weather == 2 {
-					weatherInfo = "Heavy rain"
-				}
-				fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+weatherInfo+"\n")
-
+				renderRaceTitle(v)
 				moveHorses()
 				renderHorses(v)
 				return nil
