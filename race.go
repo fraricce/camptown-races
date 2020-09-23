@@ -129,10 +129,13 @@ func moveHorses() {
 
 			fallFactor := 0
 			if place.weather == 0 {
-				fallFactor = 70
-			} else {
-				fallFactor = 30
+				fallFactor = 80
+			} else if place.weather == 1 {
+				fallFactor = 60
+			} else if place.weather == 2 {
+				fallFactor = 35
 			}
+
 			fall := rand.Intn(fallFactor) + 1
 			if fall == 2 {
 				horses[i-1].fallen = true
