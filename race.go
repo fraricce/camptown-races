@@ -169,7 +169,6 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		fmt.Fprintln(v, h)
-		//log.Printf("Horse n.%d pos:%d", i, horses[i-1].pos)
 	}
 
 	return nil
