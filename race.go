@@ -39,6 +39,7 @@ type raceInfo struct {
 
 var (
 	done       = make(chan struct{})
+	won        = 0
 	ctr        = 0
 	finishLine = 20
 	horses     []horse
@@ -108,11 +109,11 @@ func generateHorses() []horse {
 }
 
 func moveHorses() {
-	for i := 1; i <= 5; i++ {
-		strideFactor := horses[i-1].strenght + 1
+	for i := 0; i < 5; i++ {
+		strideFactor := horses[i].strenght + 1
 		stride := rand.Intn(strideFactor-1) + 1
 
-		if stride >= 8 {
+		if stride >= 9 {
 			stride = 4
 		} else if stride < 8 && stride >= 6 {
 			stride = 3
@@ -124,9 +125,9 @@ func moveHorses() {
 			stride = 3
 		}
 
-		if !(horses[i-1].fallen) && horses[i-1].pos <= finishLine {
+		if !(horses[i].fallen) && horses[i].pos <= finishLine {
 			//horses[i-1].pos++
-			horses[i-1].pos += stride
+			horses[i].pos += stride
 
 			fallFactor := 0
 			if place.weather == 0 {
@@ -139,7 +140,7 @@ func moveHorses() {
 
 			fall := rand.Intn(fallFactor) + 1
 			if fall == 2 {
-				horses[i-1].fallen = true
+				horses[i].fallen = true
 			}
 		}
 
@@ -148,12 +149,12 @@ func moveHorses() {
 
 func renderHorses(v *gocui.View) error {
 
-	for i := 1; i <= 5; i++ {
-		h := strconv.Itoa(i) + ". " + PadRight(horses[i-1].name, " ", 9)
+	for i := 0; i < 5; i++ {
+		h := strconv.Itoa(i) + ". " + PadRight(horses[i].name, " ", 9)
 
 		len := ""
 
-		maxExtent := horses[i-1].pos
+		maxExtent := horses[i].pos
 		if maxExtent > finishLine {
 			maxExtent = finishLine
 		}
@@ -164,8 +165,13 @@ func renderHorses(v *gocui.View) error {
 
 		h += len
 
-		if horses[i-1].fallen {
+		if horses[i].fallen {
 			h += "X"
+		}
+
+		if horses[i].pos >= finishLine && !horses[i].fallen && won == i {
+			h += "WINNER"
+			won = i
 		}
 
 		fmt.Fprintln(v, h)
@@ -210,7 +216,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "s. Start the race")
+		fmt.Fprintln(v, "Not available yet.")
 		v.Title = "Quotations"
 	}
 
