@@ -45,6 +45,7 @@ var (
 	horses     []horse
 	place      placeInfo
 	race       raceInfo
+	comments   = make([]string, 0)
 )
 
 func main() {
@@ -167,10 +168,19 @@ func renderHorses(v *gocui.View) error {
 
 		if horses[i].fallen {
 			h += "X"
+			_, found := Find(comments, horses[i].name+" has fallen. The jockey is well.")
+			if !found {
+				comments = append(comments, horses[i].name+" has fallen. The jockey is well.")
+			}
+
 		}
 
 		if horses[i].pos >= finishLine && !horses[i].fallen && won == i {
 			h += "WINNER"
+			_, found := Find(comments, horses[i].name+" wins the race!")
+			if !found {
+				comments = append(comments, horses[i].name+" wins the race!")
+			}
 			won = i
 		}
 
@@ -178,6 +188,15 @@ func renderHorses(v *gocui.View) error {
 	}
 
 	return nil
+}
+
+func Find(slice []string, val string) (int, bool) {
+	for i, item := range slice {
+		if item == val {
+			return i, true
+		}
+	}
+	return -1, false
 }
 
 func PadRight(str, pad string, lenght int) string {
@@ -212,12 +231,12 @@ func layout(g *gocui.Gui) error {
 		v.Title = "Commands"
 	}
 
-	if v, err := g.SetView("quotations", 23, 11, 79, 20); err != nil {
+	if v, err := g.SetView("comments", 23, 11, 79, 20); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		fmt.Fprintln(v, "Not available yet.")
-		v.Title = "Quotations"
+		v.Title = "Race speaker"
 	}
 
 	return nil
@@ -247,6 +266,25 @@ func openRace(g *gocui.Gui, v *gocui.View) error {
 
 		renderRaceTitle(v)
 		renderHorses(v)
+		return nil
+	})
+
+	return nil
+}
+
+func updateComments(g *gocui.Gui, v *gocui.View) error {
+
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View("comments")
+		if err != nil {
+			return err
+		}
+		v.Clear()
+
+		for _, c := range comments {
+			fmt.Fprintln(v, c)
+		}
+
 		return nil
 	})
 
@@ -314,6 +352,7 @@ func counter(g *gocui.Gui) {
 				renderRaceTitle(v)
 				moveHorses()
 				renderHorses(v)
+				updateComments(g, v)
 				return nil
 			})
 
