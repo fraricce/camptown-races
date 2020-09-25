@@ -64,6 +64,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+		v.BgColor = gocui.ColorGreen
 		fmt.Fprintln(v, horseNames)
 		v.Title = "Horses"
 	}
