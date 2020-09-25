@@ -21,6 +21,8 @@ type horse struct {
 	pos      int
 	fallen   bool
 	winner   bool
+	finisher bool
+	place    int
 }
 
 type placeInfo struct {
@@ -47,6 +49,7 @@ var (
 	place      placeInfo
 	race       raceInfo
 	comments   = make([]string, 0)
+	arrivalIdx = 0
 )
 
 func main() {
@@ -104,7 +107,7 @@ func generateHorses() []horse {
 		temp := petname.Generate(*words, *separator)
 		force := rand.Intn(9) + 1
 		year := rand.Intn(4) + 1
-		horses = append(horses, horse{name: cam.ToCamel(temp), age: year, strenght: force, pos: 1, fallen: false, winner: false})
+		horses = append(horses, horse{name: cam.ToCamel(temp), age: year, strenght: force, pos: 1, fallen: false, winner: false, finisher: false, place: 0})
 	}
 
 	return horses
@@ -150,7 +153,7 @@ func renderHorses(v *gocui.View) error {
 	for i := 0; i < 5; i++ {
 		h := strconv.Itoa(i) + ". " + PadRight(horses[i].name, " ", 9)
 
-		len := ""
+		footPrint := ""
 
 		maxExtent := horses[i].pos
 		if maxExtent > finishLine {
@@ -158,10 +161,10 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		for j := 0; j < maxExtent; j++ {
-			len += "."
+			footPrint += "."
 		}
 
-		h += len
+		h += footPrint
 
 		if horses[i].fallen {
 			h += "X"
@@ -172,17 +175,33 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		// move this to checkVictoryConditions()
-		if horses[i].pos >= finishLine && !horses[i].fallen && won == -1 {
-			horses[i].winner = true
-			_, found := Find(comments, horses[i].name+" wins the race!")
-			if !found {
-				comments = append(comments, horses[i].name+" wins the race!")
-				won = i
+		if horses[i].pos >= finishLine && !horses[i].fallen {
+
+			if won == -1 {
+				arrivalIdx++
+				horses[i].winner = true
+				horses[i].place = 1
+				_, found := Find(comments, horses[i].name+" wins the race!")
+				if !found {
+					comments = append(comments, horses[i].name+" wins the race!")
+					won = i
+				}
+			} else if !horses[i].winner {
+				if horses[i].place != 0 {
+					h += " " + strconv.Itoa(horses[i].place) + " place"
+				}
 			}
+
+			if !horses[i].finisher {
+				horses[i].place = arrivalIdx
+				arrivalIdx++
+				horses[i].finisher = true
+			}
+
 		}
 
 		if horses[i].winner {
-			h += " WINS!"
+			h += "  1st place, WINNER"
 		}
 
 		fmt.Fprintln(v, h)
@@ -294,8 +313,8 @@ func updateComments(g *gocui.Gui, v *gocui.View) error {
 }
 
 func renderRaceTitle(v *gocui.View) {
-
-	fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+renderWeatherInfo()+"\n")
+	fmt.Fprintln(v, race.name+" at "+place.raceCourse)
+	fmt.Fprintln(v, "Weather: "+renderWeatherInfo()+"\n")
 }
 
 func renderWeatherInfo() string {
