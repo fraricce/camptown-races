@@ -20,6 +20,7 @@ type horse struct {
 	strenght int
 	pos      int
 	fallen   bool
+	winner   bool
 }
 
 type placeInfo struct {
@@ -39,9 +40,9 @@ type raceInfo struct {
 
 var (
 	done       = make(chan struct{})
-	won        = 0
+	won        = -1
 	ctr        = 0
-	finishLine = 20
+	finishLine = 30
 	horses     []horse
 	place      placeInfo
 	race       raceInfo
@@ -103,7 +104,7 @@ func generateHorses() []horse {
 		temp := petname.Generate(*words, *separator)
 		force := rand.Intn(9) + 1
 		year := rand.Intn(4) + 1
-		horses = append(horses, horse{name: cam.ToCamel(temp), age: year, strenght: force, pos: 1, fallen: false})
+		horses = append(horses, horse{name: cam.ToCamel(temp), age: year, strenght: force, pos: 1, fallen: false, winner: false})
 	}
 
 	return horses
@@ -114,16 +115,12 @@ func moveHorses() {
 		strideFactor := horses[i].strenght + 1
 		stride := rand.Intn(strideFactor-1) + 1
 
-		if stride >= 9 {
-			stride = 4
-		} else if stride < 8 && stride >= 6 {
+		if stride >= 8 {
 			stride = 3
-		} else if stride < 6 && stride >= 4 {
+		} else if stride < 8 && stride >= 5 {
 			stride = 2
 		} else if stride < 4 && stride > 1 {
 			stride = 1
-		} else {
-			stride = 3
 		}
 
 		if !(horses[i].fallen) && horses[i].pos <= finishLine {
@@ -172,16 +169,20 @@ func renderHorses(v *gocui.View) error {
 			if !found {
 				comments = append(comments, horses[i].name+" has fallen. The jockey is well.")
 			}
-
 		}
 
-		if horses[i].pos >= finishLine && !horses[i].fallen && won == i {
-			h += "WINNER"
+		// move this to checkVictoryConditions()
+		if horses[i].pos >= finishLine && !horses[i].fallen && won == -1 {
+			horses[i].winner = true
 			_, found := Find(comments, horses[i].name+" wins the race!")
 			if !found {
 				comments = append(comments, horses[i].name+" wins the race!")
+				won = i
 			}
-			won = i
+		}
+
+		if horses[i].winner {
+			h += " WINS!"
 		}
 
 		fmt.Fprintln(v, h)
@@ -217,6 +218,7 @@ func layout(g *gocui.Gui) error {
 		v.Title = "Camptown Races"
 
 		fmt.Fprintln(v, "\n\n Welcome to "+place.raceCourse+", in "+place.county+", "+place.country+".")
+		fmt.Fprintln(v, " Today the weather is "+renderWeatherInfo()+".")
 		raceLength := fmt.Sprintf("%.2f", race.lengthFurlong)
 		fmt.Fprintln(v, " The next scheduled race is: "+race.name+", a "+race.category+" race.\n Its length is "+raceLength+" furlongs.")
 		fmt.Fprintln(v, "\n Go to race (press r)")
@@ -292,17 +294,22 @@ func updateComments(g *gocui.Gui, v *gocui.View) error {
 }
 
 func renderRaceTitle(v *gocui.View) {
+
+	fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+renderWeatherInfo()+"\n")
+}
+
+func renderWeatherInfo() string {
 	weatherInfo := ""
 	if place.weather == 0 {
-		weatherInfo = "Sunny"
+		weatherInfo = "good with sun"
 	}
 	if place.weather == 1 {
-		weatherInfo = "Light rain"
+		weatherInfo = "covered, with chances of shower"
 	}
 	if place.weather == 2 {
-		weatherInfo = "Heavy rain"
+		weatherInfo = "bad, expected heavy rain"
 	}
-	fmt.Fprintln(v, race.name+" at "+place.raceCourse+"    weather: "+weatherInfo+"\n")
+	return weatherInfo
 }
 
 func start(g *gocui.Gui, v *gocui.View) error {
