@@ -50,9 +50,23 @@ var (
 	race       raceInfo
 	comments   = make([]string, 0)
 	arrivalIdx = 0
+	words      = flag.Int("words", 1, "The number of words in the generated name")
+	separator  = flag.String("separator", " ", "The separator between words in the generated name")
 )
 
+func initGame() {
+	done = make(chan struct{})
+	won = -1
+	ctr = 0
+	finishLine = 30
+	horses = nil
+	comments = make([]string, 0)
+	arrivalIdx = 0
+}
+
 func main() {
+
+	initGame()
 
 	g, err := gocui.NewGui(gocui.OutputNormal)
 
@@ -98,8 +112,7 @@ func generatePlace() placeInfo {
 }
 
 func generateHorses() []horse {
-	words := flag.Int("words", 1, "The number of words in the pet name")
-	separator := flag.String("separator", " ", "The separator between words in the pet name")
+
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
@@ -241,14 +254,14 @@ func layout(g *gocui.Gui) error {
 		raceLength := fmt.Sprintf("%.2f", race.lengthFurlong)
 		fmt.Fprintln(v, " The next scheduled race is: "+race.name+", a "+race.category+" race.\n Its length is "+raceLength+" furlongs.")
 		fmt.Fprintln(v, "\n Go to race (press r)")
-		//renderHorses(v)
 	}
 
 	if v, err := g.SetView("command", 0, 11, 22, 20); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "s. Start the race")
+		fmt.Fprintln(v, "(s)tart the race")
+		fmt.Fprintln(v, "(n)ew race")
 		v.Title = "Commands"
 	}
 
@@ -273,6 +286,34 @@ func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", 'r', gocui.ModNone, openRace); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("", 'n', gocui.ModNone, newRace); err != nil {
+		return err
+	}
+	return nil
+}
+
+func newRace(g *gocui.Gui, v *gocui.View) error {
+	initGame()
+	horses = generateHorses()
+	place = generatePlace()
+	race = generateRace()
+
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View("raceField")
+		if err != nil {
+			return err
+		}
+		v.Clear()
+
+		fmt.Fprintln(v, "\n\n Welcome to "+place.raceCourse+", in "+place.county+", "+place.country+".")
+		fmt.Fprintln(v, " Today the weather is "+renderWeatherInfo()+".")
+		raceLength := fmt.Sprintf("%.2f", race.lengthFurlong)
+		fmt.Fprintln(v, " The next scheduled race is: "+race.name+", a "+race.category+" race.\n Its length is "+raceLength+" furlongs.")
+		fmt.Fprintln(v, "\n Go to race (press r)")
+
+		return nil
+	})
+
 	return nil
 }
 
