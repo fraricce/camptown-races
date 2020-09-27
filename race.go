@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"strconv"
+	"strings"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -164,7 +165,7 @@ func moveHorses() {
 func renderHorses(v *gocui.View) error {
 
 	for i := 0; i < 5; i++ {
-		h := strconv.Itoa(i) + ". " + PadRight(horses[i].name, " ", 9)
+		h := strconv.Itoa(i+1) + ". " + PadRight(horses[i].name, " ", 9)
 
 		footPrint := ""
 
@@ -201,7 +202,18 @@ func renderHorses(v *gocui.View) error {
 				}
 			} else if !horses[i].winner {
 				if horses[i].place != 0 {
-					h += " " + strconv.Itoa(horses[i].place) + " place"
+					gap := 4
+					if horses[i].place == 3 {
+						gap = 3
+					}
+					if horses[i].place == 4 {
+						gap = 2
+					}
+					if horses[i].place == 5 {
+						gap = 1
+					}
+
+					h += " " + PadLeft(" ", " ", gap) + strconv.Itoa(horses[i].place) + " place"
 				}
 			}
 
@@ -214,7 +226,7 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		if horses[i].winner {
-			h += "  1st place, WINNER"
+			h += "      1st place, WINNER"
 		}
 
 		fmt.Fprintln(v, h)
@@ -241,9 +253,15 @@ func PadRight(str, pad string, lenght int) string {
 	}
 }
 
+func PadLeft(s string, padStr string, overallLen int) string {
+	var padCountInt = 1 + ((overallLen - len(padStr)) / len(padStr))
+	var retStr = strings.Repeat(padStr, padCountInt) + s
+	return retStr[(len(retStr) - overallLen):]
+}
+
 func layout(g *gocui.Gui) error {
 
-	if v, err := g.SetView("raceField", 0, 0, 79, 10); err != nil {
+	if v, err := g.SetView("raceField", 0, 0, 79, 13); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -256,16 +274,17 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "\n Go to race (press r)")
 	}
 
-	if v, err := g.SetView("command", 0, 11, 22, 20); err != nil {
+	if v, err := g.SetView("command", 0, 14, 22, 23); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+		fmt.Fprintln(v, "(v)iew statistics")
 		fmt.Fprintln(v, "(s)tart the race")
 		fmt.Fprintln(v, "(n)ew race")
 		v.Title = "Commands"
 	}
 
-	if v, err := g.SetView("comments", 23, 11, 79, 20); err != nil {
+	if v, err := g.SetView("comments", 23, 14, 79, 23); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -289,6 +308,29 @@ func keybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", 'n', gocui.ModNone, newRace); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("", 'v', gocui.ModNone, showStats); err != nil {
+		return err
+	}
+	return nil
+}
+
+func showStats(g *gocui.Gui, v *gocui.View) error {
+
+	g.Update(func(g *gocui.Gui) error {
+		v, err := g.View("comments")
+		if err != nil {
+			return err
+		}
+		v.Clear()
+		v.Title = "Horses Overall Condition"
+		fmt.Fprintln(v, " ")
+		for i := 0; i < 5; i++ {
+			fmt.Fprintln(v, " "+PadRight(horses[i].name, " ", 10)+"-> "+strconv.Itoa(horses[i].strenght)+"0%")
+		}
+
+		return nil
+	})
+
 	return nil
 }
 
@@ -342,9 +384,10 @@ func updateComments(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 		v.Clear()
-
+		v.Title = "Race speaker"
+		fmt.Fprintln(v, " ")
 		for _, c := range comments {
-			fmt.Fprintln(v, c)
+			fmt.Fprintln(v, " "+c)
 		}
 
 		return nil
@@ -354,8 +397,8 @@ func updateComments(g *gocui.Gui, v *gocui.View) error {
 }
 
 func renderRaceTitle(v *gocui.View) {
-	fmt.Fprintln(v, race.name+" at "+place.raceCourse)
-	fmt.Fprintln(v, "Weather: "+renderWeatherInfo()+"\n")
+	fmt.Fprintln(v, "\n\n "+race.name+" at "+place.raceCourse)
+	fmt.Fprintln(v, " Weather: "+renderWeatherInfo()+"\n")
 }
 
 func renderWeatherInfo() string {
