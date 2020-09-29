@@ -50,6 +50,7 @@ var (
 	finishLine = 30
 	horses     []horse
 	place      placeInfo
+	placeData  = make([]placeInfo, 0)
 	race       raceInfo
 	comments   = make([]string, 0)
 	arrivalIdx = 0
@@ -70,6 +71,7 @@ func initGame() {
 func main() {
 
 	initGame()
+	loadPlaces()
 
 	g, err := gocui.NewGui(gocui.OutputNormal)
 
@@ -102,6 +104,14 @@ func find(what interface{}, where []interface{}) (idx int) {
 	return -1
 }
 
+func loadPlaces() {
+	placeData = append(placeData, placeInfo{city: "Salisbury", raceCourse: "Salisbury Racecourse", county: "Wiltshire", country: "England"})
+	placeData = append(placeData, placeInfo{city: "Cheltenham", raceCourse: "Cheltenham Racecourse", county: "Gloucestershire", country: "England"})
+	placeData = append(placeData, placeInfo{city: "Stratford-upon-Avon", raceCourse: "Stratford-on-Avon Racecourse", county: "Warwickshire", country: "England"})
+	placeData = append(placeData, placeInfo{city: "Newbury", raceCourse: "Newbury Racecourse", county: "Berkshire", country: "England"})
+	placeData = append(placeData, placeInfo{city: "Wolverhampton", raceCourse: "Wolverhampton Racecourse", county: "West Midlands", country: "England"})
+}
+
 func generateRace() raceInfo {
 	return raceInfo{name: "Cathedral Stakes", category: "Flat", branch: "", lengthFurlong: 6}
 }
@@ -119,7 +129,9 @@ func generatePlace() placeInfo {
 		}
 	}
 
-	place := placeInfo{city: "Salisbury", raceCourse: "Salisbury Racecourse", county: "Wiltshire", country: "England", weather: weather}
+	cityIdx := rand.Intn(5)
+	place := placeData[cityIdx]
+	place.weather = weather
 	return place
 }
 
@@ -129,10 +141,10 @@ func generateHorses() []horse {
 	rand.Seed(time.Now().UnixNano())
 
 	var jockeys [5]string
-	jockeys[0] = "A. Carsini"
-	jockeys[1] = "E. Kane"
-	jockeys[2] = "Gen. Padget"
-	jockeys[3] = "Raymond"
+	jockeys[0] = "Lester Keegan"
+	jockeys[1] = "Eddie Kane"
+	jockeys[2] = "Harry Stone"
+	jockeys[3] = "Dexter Parish"
 	jockeys[4] = "Bo Williamson"
 	var jockeysExtracted = make([]int, 0)
 
@@ -152,8 +164,6 @@ func generateHorses() []horse {
 				exit = true
 			}
 		}
-
-		log.Println(jockeyNameIndex)
 
 		horses = append(horses,
 			horse{
@@ -226,7 +236,7 @@ func moveHorses() {
 func renderHorses(v *gocui.View) error {
 
 	t := template.New("fallInfo")
-	t, _ = t.Parse("{{.Name}} has fallen. {{ .Jockey}} is well")
+	t, _ = t.Parse("{{.Name}} has fallen. {{ .Jockey}} is well.")
 
 	for i := 0; i < 5; i++ {
 		h := strconv.Itoa(i+1) + ". " + PadRight(horses[i].Name, " ", 9)
@@ -332,6 +342,7 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "(v)iew statistics")
 		fmt.Fprintln(v, "(s)tart the race")
 		fmt.Fprintln(v, "(n)ew race")
+		fmt.Fprintln(v, "(q)uit the game")
 		v.Title = "Commands"
 	}
 
@@ -339,7 +350,7 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "Not available yet.")
+		fmt.Fprintln(v, " Not available yet.")
 		v.Title = "Race speaker"
 	}
 
@@ -347,7 +358,7 @@ func layout(g *gocui.Gui) error {
 }
 
 func keybindings(g *gocui.Gui) error {
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+	if err := g.SetKeybinding("", 'q', gocui.ModNone, quit); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("", 's', gocui.ModNone, start); err != nil {
