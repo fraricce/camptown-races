@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"log"
 	"math/rand"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	petname "github.com/dustinkirkland/golang-petname"
@@ -15,8 +17,8 @@ import (
 )
 
 type horse struct {
-	name     string
-	jockey   string
+	Name     string
+	Jockey   string
 	age      int
 	strenght int
 	pos      int
@@ -91,6 +93,15 @@ func main() {
 	}
 }
 
+func find(what interface{}, where []interface{}) (idx int) {
+	for i, v := range where {
+		if v == what {
+			return i
+		}
+	}
+	return -1
+}
+
 func generateRace() raceInfo {
 	return raceInfo{name: "Cathedral Stakes", category: "Flat", branch: "", lengthFurlong: 6}
 }
@@ -117,11 +128,44 @@ func generateHorses() []horse {
 	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
+	var jockeys [5]string
+	jockeys[0] = "A. Carsini"
+	jockeys[1] = "E. Kane"
+	jockeys[2] = "Gen. Padget"
+	jockeys[3] = "Raymond"
+	jockeys[4] = "Bo Williamson"
+	var jockeysExtracted = make([]int, 0)
+
 	for i := 0; i < 5; i++ {
 		temp := petname.Generate(*words, *separator)
 		force := rand.Intn(9) + 1
 		year := rand.Intn(4) + 1
-		horses = append(horses, horse{name: cam.ToCamel(temp), age: year, strenght: force, pos: 1, fallen: false, winner: false, finisher: false, place: 0})
+		jockeyNameIndex := -1
+		exit := false
+		jFound := 0
+
+		for !exit {
+			jockeyNameIndex = rand.Intn(5)
+			jockeysExtracted = append(jockeysExtracted, jockeyNameIndex)
+			jFound = find(jockeyNameIndex, []interface{}{jockeysExtracted})
+			if jFound == -1 {
+				exit = true
+			}
+		}
+
+		log.Println(jockeyNameIndex)
+
+		horses = append(horses,
+			horse{
+				Name:     cam.ToCamel(temp),
+				age:      year,
+				strenght: force,
+				pos:      1,
+				fallen:   false,
+				winner:   false,
+				finisher: false,
+				place:    0,
+				Jockey:   jockeys[jockeyNameIndex]})
 	}
 
 	return horses
@@ -159,13 +203,33 @@ func moveHorses() {
 			}
 		}
 
+		if horses[i].pos >= finishLine && !horses[i].fallen {
+
+			if won == -1 {
+				arrivalIdx++
+				horses[i].winner = true
+				horses[i].place = 1
+				won = i
+			}
+
+			if !horses[i].finisher {
+				horses[i].place = arrivalIdx
+				arrivalIdx++
+				horses[i].finisher = true
+			}
+
+		}
+
 	}
 }
 
 func renderHorses(v *gocui.View) error {
 
+	t := template.New("fallInfo")
+	t, _ = t.Parse("{{.Name}} has fallen. {{ .Jockey}} is well")
+
 	for i := 0; i < 5; i++ {
-		h := strconv.Itoa(i+1) + ". " + PadRight(horses[i].name, " ", 9)
+		h := strconv.Itoa(i+1) + ". " + PadRight(horses[i].Name, " ", 9)
 
 		footPrint := ""
 
@@ -182,38 +246,25 @@ func renderHorses(v *gocui.View) error {
 
 		if horses[i].fallen {
 			h += "X"
-			_, found := Find(comments, horses[i].name+" has fallen. The jockey is well.")
+			buf := new(bytes.Buffer)
+			t.Execute(buf, horses[i])
+			_, found := Find(comments, buf.String())
 			if !found {
-				comments = append(comments, horses[i].name+" has fallen. The jockey is well.")
+				comments = append(comments, buf.String())
 			}
 		}
 
 		// move this to checkVictoryConditions()
 		if horses[i].pos >= finishLine && !horses[i].fallen {
 
-			if won == -1 {
-				arrivalIdx++
-				horses[i].winner = true
-				horses[i].place = 1
-				_, found := Find(comments, horses[i].name+" wins the race!")
+			if horses[i].winner {
+				_, found := Find(comments, horses[i].Name+" wins the race!")
 				if !found {
-					comments = append(comments, horses[i].name+" wins the race!")
-					won = i
+					comments = append(comments, horses[i].Name+" wins the race!")
 				}
-			} else if !horses[i].winner {
+			} else {
 				if horses[i].place != 0 {
-					gap := 4
-					if horses[i].place == 3 {
-						gap = 3
-					}
-					if horses[i].place == 4 {
-						gap = 2
-					}
-					if horses[i].place == 5 {
-						gap = 1
-					}
-
-					h += " " + PadLeft(" ", " ", gap) + strconv.Itoa(horses[i].place) + " place"
+					h += " " + strconv.Itoa(horses[i].place) + " place"
 				}
 			}
 
@@ -226,7 +277,7 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		if horses[i].winner {
-			h += "      1st place, WINNER"
+			h += "  1st place, WINNER"
 		}
 
 		fmt.Fprintln(v, h)
@@ -325,7 +376,7 @@ func showStats(g *gocui.Gui, v *gocui.View) error {
 		v.Title = "Horses Overall Condition"
 		fmt.Fprintln(v, " ")
 		for i := 0; i < 5; i++ {
-			fmt.Fprintln(v, " "+PadRight(horses[i].name, " ", 10)+"-> "+strconv.Itoa(horses[i].strenght)+"0%")
+			fmt.Fprintln(v, " "+PadRight(horses[i].Name, " ", 10)+"-> "+strconv.Itoa(horses[i].strenght)+"0%")
 		}
 
 		return nil
