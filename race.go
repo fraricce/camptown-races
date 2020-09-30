@@ -11,6 +11,7 @@ import (
 	"text/template"
 	"time"
 
+	match "github.com/alexpantyukhin/go-pattern-match"
 	petname "github.com/dustinkirkland/golang-petname"
 	cam "github.com/iancoleman/strcase"
 	"github.com/jroimartin/gocui"
@@ -228,7 +229,7 @@ func renderHorses(v *gocui.View) error {
 	t, _ = t.Parse("{{.Name}} has fallen. {{ .Jockey}} is well.")
 
 	for i := 0; i < 5; i++ {
-		h := strconv.Itoa(i+1) + ". " + PadRight(horses[i].Name, " ", 9)
+		h := " " + strconv.Itoa(i+1) + ". " + PadRight(horses[i].Name, " ", 9)
 
 		footPrint := ""
 
@@ -253,7 +254,6 @@ func renderHorses(v *gocui.View) error {
 			}
 		}
 
-		// move this to checkVictoryConditions()
 		if horses[i].pos >= finishLine && !horses[i].fallen {
 
 			if horses[i].winner {
@@ -263,7 +263,7 @@ func renderHorses(v *gocui.View) error {
 				}
 			} else {
 				if horses[i].place != 0 {
-					h += " " + strconv.Itoa(horses[i].place) + " place"
+					h += getPlaceText(horses[i].place)
 				}
 			}
 
@@ -272,7 +272,6 @@ func renderHorses(v *gocui.View) error {
 				arrivalIdx++
 				horses[i].finisher = true
 			}
-
 		}
 
 		if horses[i].winner {
@@ -283,6 +282,20 @@ func renderHorses(v *gocui.View) error {
 	}
 
 	return nil
+}
+
+func getPlaceText(place int) string {
+
+	// " " + strconv.Itoa(horses[i].place) + " place"
+	val := strconv.Itoa(place)
+	match.Match(place).
+		When(1, func() { val += "st" }).
+		When(2, func() { val += "nd" }).
+		When(3, func() { val += "rd" }).
+		When(4, func() { val += "th" }).
+		When(5, func() { val += "th" }).
+		Result()
+	return val
 }
 
 func Find(slice []string, val string) (int, bool) {
