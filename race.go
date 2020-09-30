@@ -117,18 +117,7 @@ func generateRace() raceInfo {
 }
 
 func generatePlace() placeInfo {
-	weather := 1
-	weatherFactor := rand.Intn(10)
-	if weatherFactor >= 5 {
-		weather = 0
-	} else {
-		if weatherFactor >= 3 {
-			weather = 1
-		} else {
-			weather = 2
-		}
-	}
-
+	weather := rand.Intn(3)
 	cityIdx := rand.Intn(5)
 	place := placeData[cityIdx]
 	place.weather = weather
@@ -200,11 +189,11 @@ func moveHorses() {
 
 			fallFactor := 0
 			if place.weather == 0 {
-				fallFactor = 80
+				fallFactor = 120
 			} else if place.weather == 1 {
-				fallFactor = 60
-			} else if place.weather == 2 {
-				fallFactor = 35
+				fallFactor = 80
+			} else if place.weather == 2 || place.weather == 3 {
+				fallFactor = 45
 			}
 
 			fall := rand.Intn(fallFactor) + 1
@@ -466,13 +455,16 @@ func renderRaceTitle(v *gocui.View) {
 func renderWeatherInfo() string {
 	weatherInfo := ""
 	if place.weather == 0 {
-		weatherInfo = "good with sun"
+		weatherInfo = "Sunny, hot temperature"
 	}
 	if place.weather == 1 {
-		weatherInfo = "covered, with chances of shower"
+		weatherInfo = "Partly cloudy, chances of showers"
 	}
 	if place.weather == 2 {
-		weatherInfo = "bad, expected heavy rain"
+		weatherInfo = "Chilly, with heavy rain"
+	}
+	if place.weather == 3 {
+		weatherInfo = "Chilly, slightly snowing"
 	}
 	return weatherInfo
 }
