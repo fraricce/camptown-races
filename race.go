@@ -185,7 +185,7 @@ func moveHorses() {
 		}
 
 		if !(horses[i].fallen) && horses[i].pos <= finishLine {
-			//horses[i-1].pos++
+
 			horses[i].pos += stride
 
 			fallFactor := 0
@@ -208,7 +208,7 @@ func moveHorses() {
 			if won == -1 {
 				arrivalIdx++
 				horses[i].winner = true
-				horses[i].place = 1
+				horses[i].place = arrivalIdx
 				won = i
 			}
 
