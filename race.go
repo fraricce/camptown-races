@@ -174,15 +174,16 @@ func generateHorses() []horse {
 func moveHorses() {
 	for i := 0; i < 5; i++ {
 		strideFactor := horses[i].strenght + 1
-		stride := rand.Intn(strideFactor-1) + 1
+		stride := rand.Intn(strideFactor) + 1
 
-		if stride >= 8 {
-			stride = 3
-		} else if stride < 8 && stride >= 5 {
-			stride = 2
-		} else if stride < 4 && stride > 1 {
-			stride = 1
-		}
+		_, res := match.Match(stride).
+			When(func(t int) bool { return t >= 8 }, 3).
+			When(func(t int) bool { return t < 8 && t >= 5 }, 2).
+			When(func(t int) bool { return t < 4 && t > 1 }, 1).
+			When(match.ANY, 1).
+			Result()
+
+		stride = res.(int)
 
 		if !(horses[i].fallen) && horses[i].pos <= finishLine {
 
@@ -286,15 +287,14 @@ func renderHorses(v *gocui.View) error {
 
 func getPlaceText(place int) string {
 
-	// " " + strconv.Itoa(horses[i].place) + " place"
 	val := strconv.Itoa(place)
-	match.Match(place).
-		When(1, func() { val += "st" }).
-		When(2, func() { val += "nd" }).
-		When(3, func() { val += "rd" }).
-		When(4, func() { val += "th" }).
-		When(5, func() { val += "th" }).
+	_, res := match.Match(place).
+		When(1, "st").
+		When(2, "nd").
+		When(3, "rd").
+		When(func(ts int) bool { return ts > 3 }, "th").
 		Result()
+	val += res.(string)
 	return val
 }
 
