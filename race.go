@@ -189,16 +189,14 @@ func moveHorses() {
 
 			horses[i].pos += stride
 
-			fallFactor := 0
-			if place.weather == 0 {
-				fallFactor = 120
-			} else if place.weather == 1 {
-				fallFactor = 80
-			} else if place.weather == 2 || place.weather == 3 {
-				fallFactor = 45
-			}
+			_, fallFactor := match.Match(place.weather).
+				When(0, 200).
+				When(1, 170).
+				When(2, 120).
+				When(3, 90).
+				Result()
 
-			fall := rand.Intn(fallFactor)
+			fall := rand.Intn(fallFactor.(int))
 
 			if fall <= 1 {
 				horses[i].fallen = true
@@ -219,7 +217,6 @@ func moveHorses() {
 				arrivalIdx++
 				horses[i].finisher = true
 			}
-
 		}
 
 	}
@@ -342,10 +339,10 @@ func layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "(v)iew statistics")
-		fmt.Fprintln(v, "(s)tart the race")
-		fmt.Fprintln(v, "(n)ew race")
-		fmt.Fprintln(v, "(q)uit the game")
+		fmt.Fprintln(v, "\n (v)iew statistics")
+		fmt.Fprintln(v, " (s)tart the race")
+		fmt.Fprintln(v, " (n)ew race")
+		fmt.Fprintln(v, " (q)uit the game")
 		v.Title = "Commands"
 	}
 
@@ -467,20 +464,15 @@ func renderRaceTitle(v *gocui.View) {
 }
 
 func renderWeatherInfo() string {
-	weatherInfo := ""
-	if place.weather == 0 {
-		weatherInfo = "Sunny, hot temperature"
-	}
-	if place.weather == 1 {
-		weatherInfo = "Partly cloudy, chances of showers"
-	}
-	if place.weather == 2 {
-		weatherInfo = "Chilly, with heavy rain"
-	}
-	if place.weather == 3 {
-		weatherInfo = "Chilly, slightly snowing"
-	}
-	return weatherInfo
+
+	_, weatherInfo := match.Match(place.weather).
+		When(0, "Sunny, hot temperature.").
+		When(1, "Partly cloudy, chances of showers.").
+		When(2, "Chilly, with heavy rain.").
+		When(3, "Chilly, slightly snowing.").
+		Result()
+
+	return weatherInfo.(string)
 }
 
 func start(g *gocui.Gui, v *gocui.View) error {
