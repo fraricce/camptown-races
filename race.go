@@ -198,8 +198,9 @@ func moveHorses() {
 				fallFactor = 45
 			}
 
-			fall := rand.Intn(fallFactor) + 1
-			if fall == 2 {
+			fall := rand.Intn(fallFactor)
+
+			if fall <= 1 {
 				horses[i].fallen = true
 			}
 		}
