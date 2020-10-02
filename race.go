@@ -54,8 +54,8 @@ var (
 	race       raceInfo
 	comments   = make([]string, 0)
 	arrivalIdx = 0
-	words      = 1   // flag.Int("words", 1, "The number of words in the generated name")
-	separator  = " " //flag.String("separator", " ", "The separator between words in the generated name")
+	words      = 1
+	separator  = " "
 )
 
 func initGame() {
@@ -126,33 +126,12 @@ func generatePlace() placeInfo {
 
 func generateHorses() []horse {
 
-	//flag.Parse()
 	rand.Seed(time.Now().UnixNano())
-
-	var jockeys [5]string
-	jockeys[0] = "Lester Keegan"
-	jockeys[1] = "Eddie Kane"
-	jockeys[2] = "Harry Stone"
-	jockeys[3] = "Dexter Parish"
-	jockeys[4] = "Bo Williamson"
-	//var jockeysExtracted = make([]int, 0)
 
 	for i := 0; i < 5; i++ {
 		temp := petname.Generate(words, separator)
 		force := rand.Intn(9) + 1
 		year := rand.Intn(4) + 1
-		// jockeyNameIndex := -1
-		// exit := false
-		// jFound := 0
-
-		// for !exit {
-		// 	jockeyNameIndex = rand.Intn(5)
-		// 	jockeysExtracted = append(jockeysExtracted, jockeyNameIndex)
-		// 	jFound = find(jockeyNameIndex, []interface{}{jockeysExtracted})
-		// 	if jFound == -1 {
-		// 		exit = true
-		// 	}
-		// }
 
 		horses = append(horses,
 			horse{
@@ -217,14 +196,18 @@ func moveHorses() {
 				horses[i].finisher = true
 			}
 		}
-
 	}
 }
 
 func renderHorses(v *gocui.View) error {
 
+	var fallenTemplates = make([]string, 2)
+	fallenTemplates[0] = "{{.Name}} has fallen. {{ .Jockey}} is well."
+	fallenTemplates[1] = "Look at {{.Name}}! Such a bad fall!"
+	fallIndex := rand.Intn(1)
+
 	t := template.New("fallInfo")
-	t, _ = t.Parse("{{.Name}} has fallen. {{ .Jockey}} is well.")
+	t, _ = t.Parse(fallenTemplates[fallIndex])
 
 	for i := 0; i < 5; i++ {
 		h := " " + strconv.Itoa(i+1) + ". " + PadRight(horses[i].Name, " ", 9)
