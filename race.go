@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -55,8 +54,8 @@ var (
 	race       raceInfo
 	comments   = make([]string, 0)
 	arrivalIdx = 0
-	words      = flag.Int("words", 1, "The number of words in the generated name")
-	separator  = flag.String("separator", " ", "The separator between words in the generated name")
+	words      = 1   // flag.Int("words", 1, "The number of words in the generated name")
+	separator  = " " //flag.String("separator", " ", "The separator between words in the generated name")
 )
 
 func initGame() {
@@ -127,7 +126,7 @@ func generatePlace() placeInfo {
 
 func generateHorses() []horse {
 
-	flag.Parse()
+	//flag.Parse()
 	rand.Seed(time.Now().UnixNano())
 
 	var jockeys [5]string
@@ -136,24 +135,24 @@ func generateHorses() []horse {
 	jockeys[2] = "Harry Stone"
 	jockeys[3] = "Dexter Parish"
 	jockeys[4] = "Bo Williamson"
-	var jockeysExtracted = make([]int, 0)
+	//var jockeysExtracted = make([]int, 0)
 
 	for i := 0; i < 5; i++ {
-		temp := petname.Generate(*words, *separator)
+		temp := petname.Generate(words, separator)
 		force := rand.Intn(9) + 1
 		year := rand.Intn(4) + 1
-		jockeyNameIndex := -1
-		exit := false
-		jFound := 0
+		// jockeyNameIndex := -1
+		// exit := false
+		// jFound := 0
 
-		for !exit {
-			jockeyNameIndex = rand.Intn(5)
-			jockeysExtracted = append(jockeysExtracted, jockeyNameIndex)
-			jFound = find(jockeyNameIndex, []interface{}{jockeysExtracted})
-			if jFound == -1 {
-				exit = true
-			}
-		}
+		// for !exit {
+		// 	jockeyNameIndex = rand.Intn(5)
+		// 	jockeysExtracted = append(jockeysExtracted, jockeyNameIndex)
+		// 	jFound = find(jockeyNameIndex, []interface{}{jockeysExtracted})
+		// 	if jFound == -1 {
+		// 		exit = true
+		// 	}
+		// }
 
 		horses = append(horses,
 			horse{
@@ -165,7 +164,7 @@ func generateHorses() []horse {
 				winner:   false,
 				finisher: false,
 				place:    0,
-				Jockey:   jockeys[jockeyNameIndex]})
+				Jockey:   cam.ToCamel(petname.Generate(1, separator)) + " " + cam.ToCamel(petname.Generate(1, separator))})
 	}
 
 	return horses
