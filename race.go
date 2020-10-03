@@ -43,11 +43,14 @@ type raceInfo struct {
 	lengthFurlong float32
 }
 
+const horsesNumber = 8
+const courseStep = 45
+
 var (
 	done       = make(chan struct{})
 	won        = -1
 	ctr        = 0
-	finishLine = 30
+	finishLine = courseStep
 	horses     []horse
 	place      placeInfo
 	placeData  = make([]placeInfo, 0)
@@ -62,7 +65,7 @@ func initGame() {
 	done = make(chan struct{})
 	won = -1
 	ctr = 0
-	finishLine = 30
+	finishLine = courseStep
 	horses = nil
 	comments = make([]string, 0)
 	arrivalIdx = 0
@@ -126,7 +129,7 @@ func generatePlace() placeInfo {
 
 func generateHorses() []horse {
 	rand.Seed(time.Now().UnixNano())
-	for i := 0; i < 5; i++ {
+	for i := 0; i < horsesNumber; i++ {
 
 		temp := petname.Generate(words, separator)
 		force := rand.Intn(9) + 1
@@ -149,7 +152,7 @@ func generateHorses() []horse {
 }
 
 func moveHorses() {
-	for i := 0; i < 5; i++ {
+	for i := 0; i < horsesNumber; i++ {
 		stride := rand.Intn(horses[i].strenght) + 1
 
 		_, res := match.Match(stride).
@@ -220,7 +223,7 @@ func renderHorses(v *gocui.View) error {
 	t := template.New("fallInfo")
 	t, _ = t.Parse(fallenTemplates[fallIndex])
 
-	for i := 0; i < 5; i++ {
+	for i := 0; i < horsesNumber; i++ {
 		h := " " + strconv.Itoa(i+1) + ". " + PadRight(horses[i].Name, " ", 9)
 
 		footPrint := ""
@@ -267,7 +270,7 @@ func renderHorses(v *gocui.View) error {
 		}
 
 		if horses[i].winner {
-			h += "  1st place, WINNER"
+			h += "  1st WINS"
 		}
 
 		fmt.Fprintln(v, h)
@@ -315,12 +318,11 @@ func PadLeft(s string, padStr string, overallLen int) string {
 
 func layout(g *gocui.Gui) error {
 
-	if v, err := g.SetView("raceField", 0, 0, 79, 13); err != nil {
+	if v, err := g.SetView("raceField", 0, 0, 79, 14); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		v.Title = "Camptown Races"
-
 		fmt.Fprintln(v, "\n\n Welcome to "+place.raceCourse+", in "+place.county+", "+place.country+".")
 		fmt.Fprintln(v, " Today the weather is "+renderWeatherInfo()+".")
 		raceLength := fmt.Sprintf("%.2f", race.lengthFurlong)
@@ -328,7 +330,7 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "\n Go to race (press r)")
 	}
 
-	if v, err := g.SetView("command", 0, 14, 22, 23); err != nil {
+	if v, err := g.SetView("command", 0, 15, 22, 27); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -339,7 +341,7 @@ func layout(g *gocui.Gui) error {
 		v.Title = "Commands"
 	}
 
-	if v, err := g.SetView("comments", 23, 14, 79, 23); err != nil {
+	if v, err := g.SetView("comments", 23, 15, 79, 27); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -380,7 +382,7 @@ func showStats(g *gocui.Gui, v *gocui.View) error {
 		v.Title = "Horses Overall Condition and Stats"
 		fmt.Fprintln(v, " ")
 		fmt.Fprintln(v, " Name      Age   Condition   Jockey")
-		for i := 0; i < 5; i++ {
+		for i := 0; i < horsesNumber; i++ {
 			fmt.Fprintln(v, " "+
 				PadRight(horses[i].Name, " ", 10)+
 				PadRight(strconv.Itoa(horses[i].age), " ", 6)+
@@ -479,7 +481,7 @@ func start(g *gocui.Gui, v *gocui.View) error {
 }
 
 func someonePassedTheFinishLine() int {
-	for i := 0; i < 5; i++ {
+	for i := 0; i < horsesNumber; i++ {
 		if (horses[i].pos) >= finishLine {
 			return i
 		}
@@ -489,12 +491,12 @@ func someonePassedTheFinishLine() int {
 
 func allEndedRace() bool {
 	howManyPassed := 0
-	for i := 0; i < 5; i++ {
+	for i := 0; i < horsesNumber; i++ {
 		if (horses[i].pos) > finishLine || horses[i].fallen {
 			howManyPassed++
 		}
 	}
-	return howManyPassed == 5
+	return howManyPassed == horsesNumber
 }
 
 func quit(g *gocui.Gui, v *gocui.View) error {
@@ -508,7 +510,7 @@ func counter(g *gocui.Gui) {
 		select {
 		case <-done:
 			return
-		case <-time.After(650 * time.Millisecond):
+		case <-time.After(500 * time.Millisecond):
 			ctr++
 
 			g.Update(func(g *gocui.Gui) error {
