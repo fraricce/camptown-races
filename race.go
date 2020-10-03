@@ -125,13 +125,12 @@ func generatePlace() placeInfo {
 }
 
 func generateHorses() []horse {
-
 	rand.Seed(time.Now().UnixNano())
-
 	for i := 0; i < 5; i++ {
+
 		temp := petname.Generate(words, separator)
 		force := rand.Intn(9) + 1
-		year := rand.Intn(4) + 1
+		year := rand.Intn(7) + 1
 
 		horses = append(horses,
 			horse{
@@ -143,7 +142,7 @@ func generateHorses() []horse {
 				winner:   false,
 				finisher: false,
 				place:    0,
-				Jockey:   cam.ToCamel(petname.Generate(1, separator)) + " " + cam.ToCamel(petname.Generate(1, separator))})
+				Jockey:   cam.ToCamel(petname.Generate(1, separator)[0:1]) + ". " + cam.ToCamel(petname.Generate(1, separator))})
 	}
 
 	return horses
@@ -151,15 +150,28 @@ func generateHorses() []horse {
 
 func moveHorses() {
 	for i := 0; i < 5; i++ {
-		strideFactor := horses[i].strenght + 1
-		stride := rand.Intn(strideFactor) + 1
+		stride := rand.Intn(horses[i].strenght) + 1
 
 		_, res := match.Match(stride).
-			When(func(t int) bool { return t >= 8 }, 3).
-			When(func(t int) bool { return t < 8 && t >= 5 }, 2).
+			When(func(t int) bool { return t >= 9 }, 3).
+			When(func(t int) bool { return t < 9 && t >= 5 }, 2).
 			When(func(t int) bool { return t < 4 && t > 1 }, 1).
 			When(match.ANY, 1).
 			Result()
+
+		if horses[i].age == 4 {
+			chanceForYoung := rand.Intn(4)
+			if chanceForYoung == 4 {
+				stride++
+			}
+		}
+
+		if horses[i].age > 5 {
+			chanceForOlder := rand.Intn(10)
+			if chanceForOlder == 10 {
+				stride--
+			}
+		}
 
 		stride = res.(int)
 
@@ -182,7 +194,6 @@ func moveHorses() {
 		}
 
 		if horses[i].pos >= finishLine && !horses[i].fallen {
-
 			if won == -1 {
 				arrivalIdx++
 				horses[i].winner = true
@@ -366,10 +377,15 @@ func showStats(g *gocui.Gui, v *gocui.View) error {
 			return err
 		}
 		v.Clear()
-		v.Title = "Horses Overall Condition"
+		v.Title = "Horses Overall Condition and Stats"
 		fmt.Fprintln(v, " ")
+		fmt.Fprintln(v, " Name      Age  Condition   Jockey")
 		for i := 0; i < 5; i++ {
-			fmt.Fprintln(v, " "+PadRight(horses[i].Name, " ", 10)+"-> "+strconv.Itoa(horses[i].strenght)+"0%")
+			fmt.Fprintln(v, " "+
+				PadRight(horses[i].Name, " ", 10)+
+				PadRight(strconv.Itoa(horses[i].age), " ", 5)+
+				PadRight(strconv.Itoa(horses[i].strenght)+"0%", " ", 12)+
+				PadRight(horses[i].Jockey, " ", 20))
 		}
 
 		return nil
