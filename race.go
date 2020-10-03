@@ -379,11 +379,11 @@ func showStats(g *gocui.Gui, v *gocui.View) error {
 		v.Clear()
 		v.Title = "Horses Overall Condition and Stats"
 		fmt.Fprintln(v, " ")
-		fmt.Fprintln(v, " Name      Age  Condition   Jockey")
+		fmt.Fprintln(v, " Name      Age   Condition   Jockey")
 		for i := 0; i < 5; i++ {
 			fmt.Fprintln(v, " "+
 				PadRight(horses[i].Name, " ", 10)+
-				PadRight(strconv.Itoa(horses[i].age), " ", 5)+
+				PadRight(strconv.Itoa(horses[i].age), " ", 6)+
 				PadRight(strconv.Itoa(horses[i].strenght)+"0%", " ", 12)+
 				PadRight(horses[i].Jockey, " ", 20))
 		}
