@@ -43,7 +43,7 @@ type raceInfo struct {
 	lengthFurlong float32
 }
 
-const horsesNumber = 8
+const horsesNumber = 5
 const courseStep = 45
 
 var (
@@ -318,7 +318,7 @@ func PadLeft(s string, padStr string, overallLen int) string {
 
 func layout(g *gocui.Gui) error {
 
-	if v, err := g.SetView("raceField", 0, 0, 79, 14); err != nil {
+	if v, err := g.SetView("raceField", 0, 0, 79, 10); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -330,7 +330,7 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "\n Go to race (press r)")
 	}
 
-	if v, err := g.SetView("command", 0, 15, 22, 27); err != nil {
+	if v, err := g.SetView("command", 0, 11, 22, 24); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -341,7 +341,7 @@ func layout(g *gocui.Gui) error {
 		v.Title = "Commands"
 	}
 
-	if v, err := g.SetView("comments", 23, 15, 79, 27); err != nil {
+	if v, err := g.SetView("comments", 23, 11, 79, 24); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
