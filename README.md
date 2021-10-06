@@ -1,5 +1,5 @@
-# camptown-races
-A CLI based game where player runs horse races
+# Camptown Races
+A CLI based horse racing game written in Go
 
 ![Camptown Races - CLI Game](https://github.com/fraricce/camptown-races/blob/master/camptown-races-screen1.PNG?raw=true)
 
